@@ -1,9 +1,40 @@
 export const typeDefs = `
+
+
+enum UserType  {
+  ADMIN
+  SERVICE_PROVIDER
+  CONSUMER
+}
+
+enum Status {
+  CREATED
+  PENDING
+  ACCEPTED
+  APPROVED
+  ASSIGNED
+  COMPLETED
+  COMPLAINED
+  REJECTED
+}
+
+enum SampleStatus {
+  NOT_SENT
+  RECEIVED
+  ON_WAY
+}
+
+enum InvoiceStatus {
+  SENT
+  COMPLAINED
+}
+
+
+
+
 type Client {
-  companyName: String
-  gst: String
   id: ID! @id(autogenerate: true)
-  companyImage: String
+  sub_type: String
   orderedProject: Project @relationship(type: "ORDERED", direction: OUT)
   hasModuleticket: ModuleTicket @relationship(type: "HAS", direction: OUT)
   hasNotification: Notification @relationship(type: "HAS", direction: OUT)
@@ -11,6 +42,9 @@ type Client {
   adminApproved: Admin @relationship(type: "APPROVED", direction: IN)
   userIs: User @relationship(type: "IS", direction: IN)
   invoiceHas: Invoice @relationship(type: "HAS", direction: IN)
+  hasLeads: Leads @relationship(type: "HAS", direction: OUT)
+  communicationticketFor: CommunicationTicket @relationship(type: "FOR", direction: IN)
+  hasReply: Reply @relationship(type: "HAS", direction: OUT)
 }
 
 type Admin {
@@ -25,13 +59,14 @@ type Admin {
   hasProject: Project @relationship(type: "HAS", direction: OUT)
   userIs: User @relationship(type: "IS", direction: IN)
   invoiceHas: Invoice @relationship(type: "HAS", direction: IN)
+  hasLeads: Leads @relationship(type: "HAS", direction: OUT)
+  createdCommunicationticket: CommunicationTicket @relationship(type: "CREATED", direction: OUT)
 }
 
 type Vendor {
   id: ID! @id(autogenerate: true)
-  labName: String
-  registration: String
-  skills: [String]
+  industry: [String]
+  sub_type: String
   labImage: String
   adminApproved: Admin @relationship(type: "APPROVED", direction: IN)
   hasModuleticket: ModuleTicket @relationship(type: "HAS", direction: OUT)
@@ -39,6 +74,9 @@ type Vendor {
   createdInvoice: Invoice @relationship(type: "CREATED", direction: OUT)
   hasSupportticket: SupportTicket @relationship(type: "HAS", direction: OUT)
   userIs: User @relationship(type: "IS", direction: IN)
+  hasLeads: Leads @relationship(type: "HAS", direction: OUT)
+  communicationticketFor: CommunicationTicket @relationship(type: "FOR", direction: IN)
+  hasReply: Reply @relationship(type: "HAS", direction: OUT)
 }
 
 type User {
@@ -46,13 +84,28 @@ type User {
   email: String
   image: String
   bio: String
-  id: ID! @id(autogenerate: true)
+  id: ID @id(autogenerate: true)
   address: String
+  city: String
+  state: String
+  zip: String
   createdAt: DateTime
+  companyName: String
+  companyEmail: String
+  status: Status @default(value: PENDING)
+  user_type: UserType
+  gstNumber: String
   isAdmin: Admin @relationship(type: "IS", direction: OUT)
   isVendor: Vendor @relationship(type: "IS", direction: OUT)
   isClient: Client @relationship(type: "IS", direction: OUT)
+  hasDocuments: Documents @relationship(type: "HAS", direction: OUT)
+  hasModuleticket: ModuleTicket @relationship(type: "Has", direction: OUT)
 }
+
+
+
+
+
 
 type Project {
   id: ID! @id(autogenerate: true)
@@ -72,16 +125,11 @@ type Project {
   projectticketFor: ProjectTicket @relationship(type: "FOR", direction: IN)
 }
 
-enum Status {
-  PENDING
-  APPROVED
-  ASSIGNED
-  COMPLETED
-  CANCELLED
-}
+
 
 type Documents {
-  id: ID! @id(autogenerate: true)
+  id: String
+  userHas: User @relationship(type: "HAS", direction: IN)
   hasImages: Images @relationship(type: "HAS", direction: OUT)
   hasFiles: Files @relationship(type: "HAS", direction: OUT)
   moduleHas: Module @relationship(type: "HAS", direction: IN)
@@ -108,10 +156,15 @@ type ProjectTicket {
 
 type ModuleTicket {
   id: ID! @id(autogenerate: true)
+  ticket: String! @default(value: "Not Available")
+  status: Status @default(value: PENDING)
+  complain: String
+  reports: [String]
   clientHas: Client @relationship(type: "HAS", direction: IN)
   vendorHas: Vendor @relationship(type: "HAS", direction: IN)
   projectticketHas: ProjectTicket @relationship(type: "HAS", direction: IN)
   forModule: Module @relationship(type: "FOR", direction: OUT)
+  userHas: User @relationship(type: "Has", direction: IN)
 }
 
 type Notification {
@@ -119,6 +172,8 @@ type Notification {
   title: String
   description: String
   image: String
+  type: String
+  createdAt: DateTime
   clientHas: Client @relationship(type: "HAS", direction: IN)
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
   vendorHas: Vendor @relationship(type: "HAS", direction: IN)
@@ -129,17 +184,30 @@ type Invoice {
   clientName: String
   clientAddress: String
   clientEmail: String
-  price: Int
-  tax: Int
   totalPrice: Int
+  createdAt: DateTime
+  priceWithTax: Int
+  complain: String
+  taxRate: Int
+  status: InvoiceStatus @default(value: SENT)
+  taxType: String
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
   vendorCreated: Vendor @relationship(type: "CREATED", direction: IN)
   hasClient: Client @relationship(type: "HAS", direction: OUT)
   hasAdmin: Admin @relationship(type: "HAS", direction: OUT)
+  hasService: [Service!]! @relationship(type: "HAS", direction: OUT)
+}
+
+type Service {
+  id: String
+  serviceName: String
+  price: Int
+  invoiceHas: Invoice @relationship(type: "HAS", direction: IN)
 }
 
 type SupportTicket {
   id: ID! @id(autogenerate: true)
+  ticket: String! @default(value: "Not Available")
   clientHas: Client @relationship(type: "HAS", direction: IN)
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
   vendorHas: Vendor @relationship(type: "HAS", direction: IN)
@@ -149,6 +217,7 @@ type Module {
   id: ID! @id(autogenerate: true)
   title: String
   description: String
+  sampleStatus: SampleStatus @default(value: NOT_SENT)
   projectHas: Project @relationship(type: "HAS", direction: IN)
   moduleticketFor: ModuleTicket @relationship(type: "FOR", direction: IN)
   hasDocuments: Documents @relationship(type: "HAS", direction: OUT)
@@ -163,6 +232,56 @@ type Page {
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
 }
 
+type Leads {
+  id: ID! @id(autogenerate: true)
+  email: String!
+  phone: String
+  industry: String
+  gstNumber: String
+  message: String
+  createdAt: String
+  duration: String
+  vendorAddress: String
+  price: Int
+  condition: String @default(value: "User Created")
+  status: Status @default(value: PENDING)
+  clientHas: Client @relationship(type: "HAS", direction: IN)
+  vendorHas: Vendor @relationship(type: "HAS", direction: IN)
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+
+type Counter {
+  projectCount: Int @default(value: 1000)
+  moduleCount: Int @default(value: 1000)
+  invoiceCount: Int @default(value: 1000)
+}
+
+
+type CommunicationTicket {
+  id: ID! @id(autogenerate: true)
+  message: String
+  date: DateTime
+  sub: String
+  files: String
+  adminCreated: Admin @relationship(type: "CREATED", direction: IN)
+  hasReply: [Reply!]! @relationship(type: "HAS", direction: OUT)
+  forVendor: [Vendor!]! @relationship(type: "FOR", direction: OUT)
+  forClient: [Client!]! @relationship(type: "FOR", direction: OUT)
+}
+
+type Reply {
+  id: ID! @id(autogenerate: true)
+  replyMessage: String
+  senderEmail: String
+  communicationticketHas: CommunicationTicket @relationship(type: "HAS", direction: IN)
+  clientHas: Client @relationship(type: "HAS", direction: IN)
+  vendorHas: Vendor @relationship(type: "HAS", direction: IN)
+}
+
+type Mutation {
+  signUp(email: String!, name: String!): String! 
+  signIn(email: String!, name: String!): String!
+}
 
 
 
