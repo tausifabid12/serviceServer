@@ -2,14 +2,19 @@ export const typeDefs = `
 
 
 enum UserType  {
+  EMPLOYEE
   ADMIN
   SERVICE_PROVIDER
   CONSUMER
+  COVENTEN_EMPLOYEE
+  LAB_ASSISTANT
 }
 
 enum Status {
   CREATED
   PENDING
+  UNDER_REVIEW
+  DRAFT
   ACCEPTED
   APPROVED
   ASSIGNED
@@ -27,6 +32,19 @@ enum SampleStatus {
 enum InvoiceStatus {
   SENT
   COMPLAINED
+  CONFIRMED
+}
+
+enum SentBy{
+  ADMIN
+  VENDOR
+}
+
+enum  CategoryTypeEnum{
+  SERVICE
+  PRODUCT
+  SOLUTION
+  SUB_CATEGORY
 }
 
 
@@ -55,12 +73,21 @@ type Admin {
   createdNotification: Notification @relationship(type: "CREATED", direction: OUT)
   createdInvoice: Invoice @relationship(type: "CREATED", direction: OUT)
   createdSupportticket: SupportTicket @relationship(type: "CREATED", direction: OUT)
-  createdPage: Page @relationship(type: "CREATED", direction: OUT)
   hasProject: Project @relationship(type: "HAS", direction: OUT)
   userIs: User @relationship(type: "IS", direction: IN)
   invoiceHas: Invoice @relationship(type: "HAS", direction: IN)
   hasLeads: Leads @relationship(type: "HAS", direction: OUT)
   createdCommunicationticket: CommunicationTicket @relationship(type: "CREATED", direction: OUT)
+  createdRole: Role @relationship(type: "CREATED", direction: OUT)
+  createdService: Service @relationship(type: "CREATED", direction: OUT)
+  hasLog: Log @relationship(type: "HAS", direction: OUT)
+  hasProduct: Product @relationship(type: "HAS", direction: OUT)
+  hasCategory: Category @relationship(type: "HAS", direction: OUT)
+  hasEvent: [Event!]! @relationship(type: "HAS", direction: OUT)
+  hasIndustrypage: [IndustryPage!]! @relationship(type: "HAS", direction: OUT)
+  createdSolutionpage: SolutionPage @relationship(type: "CREATED", direction: OUT)
+  hasTermspage: TermsPage @relationship(type: "HAS", direction: OUT)
+  hasLearnitem: LearnItem @relationship(type: "HAS", direction: OUT)
 }
 
 type Vendor {
@@ -71,35 +98,42 @@ type Vendor {
   adminApproved: Admin @relationship(type: "APPROVED", direction: IN)
   hasModuleticket: ModuleTicket @relationship(type: "HAS", direction: OUT)
   hasNotification: Notification @relationship(type: "HAS", direction: OUT)
-  createdInvoice: Invoice @relationship(type: "CREATED", direction: OUT)
+  createdInvoice: [Invoice!]! @relationship(type: "CREATED", direction: OUT)
   hasSupportticket: SupportTicket @relationship(type: "HAS", direction: OUT)
   userIs: User @relationship(type: "IS", direction: IN)
   hasLeads: Leads @relationship(type: "HAS", direction: OUT)
   communicationticketFor: CommunicationTicket @relationship(type: "FOR", direction: IN)
   hasReply: Reply @relationship(type: "HAS", direction: OUT)
+  hasManagement: Management @relationship(type: "HAS", direction: OUT)
+  hasAboutpage: AboutPage @relationship(type: "HAS", direction: OUT)
+  hasFeaturespage: FeaturesPage @relationship(type: "HAS", direction: OUT)
 }
 
 type User {
   name: String
   email: String
   image: String
+  phone: String
   bio: String
   id: ID @id(autogenerate: true)
   address: String
   city: String
   state: String
   zip: String
+  pan: String
   createdAt: DateTime
   companyName: String
   companyEmail: String
   status: Status @default(value: PENDING)
   user_type: UserType
+  permissions: [String]
   gstNumber: String
   isAdmin: Admin @relationship(type: "IS", direction: OUT)
   isVendor: Vendor @relationship(type: "IS", direction: OUT)
   isClient: Client @relationship(type: "IS", direction: OUT)
   hasDocuments: Documents @relationship(type: "HAS", direction: OUT)
-  hasModuleticket: ModuleTicket @relationship(type: "Has", direction: OUT)
+  hasRole: Role @relationship(type: "HAS", direction: OUT)
+  hasEmployee: Employee @relationship(type: "HAS", direction: OUT)
 }
 
 
@@ -128,7 +162,7 @@ type Project {
 
 
 type Documents {
-  id: String
+  id: ID! @id(autogenerate: true)
   userHas: User @relationship(type: "HAS", direction: IN)
   hasImages: Images @relationship(type: "HAS", direction: OUT)
   hasFiles: Files @relationship(type: "HAS", direction: OUT)
@@ -148,6 +182,7 @@ type Files {
 }
 
 type ProjectTicket {
+  id: ID! @id(autogenerate: true)
   projectTicket: String @default(value: "Not Available") 
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
   hasModuleticket: ModuleTicket @relationship(type: "HAS", direction: OUT)
@@ -160,11 +195,13 @@ type ModuleTicket {
   status: Status @default(value: PENDING)
   complain: String
   reports: [String]
+  createdAt: DateTime
   clientHas: Client @relationship(type: "HAS", direction: IN)
   vendorHas: Vendor @relationship(type: "HAS", direction: IN)
   projectticketHas: ProjectTicket @relationship(type: "HAS", direction: IN)
   forModule: Module @relationship(type: "FOR", direction: OUT)
   userHas: User @relationship(type: "Has", direction: IN)
+  managementSentReports: Management @relationship(type: "SENT_REPORTS", direction: IN)
 }
 
 type Notification {
@@ -181,6 +218,7 @@ type Notification {
 
 type Invoice {
   id: ID! @id(autogenerate: true)
+  ticket: String @default(value: "Not Available")
   clientName: String
   clientAddress: String
   clientEmail: String
@@ -190,17 +228,18 @@ type Invoice {
   complain: String
   taxRate: Int
   status: InvoiceStatus @default(value: SENT)
+  sentBy: SentBy @default(value: ADMIN)
   taxType: String
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
   vendorCreated: Vendor @relationship(type: "CREATED", direction: IN)
   hasClient: Client @relationship(type: "HAS", direction: OUT)
   hasAdmin: Admin @relationship(type: "HAS", direction: OUT)
-  hasService: [Service!]! @relationship(type: "HAS", direction: OUT)
+  hasPurchase: [Purchase!]! @relationship(type: "HAS", direction: OUT)
 }
 
-type Service {
+type  Purchase {
   id: String
-  serviceName: String
+  itemName: String
   price: Int
   invoiceHas: Invoice @relationship(type: "HAS", direction: IN)
 }
@@ -208,6 +247,7 @@ type Service {
 type SupportTicket {
   id: ID! @id(autogenerate: true)
   ticket: String! @default(value: "Not Available")
+  createdAt: DateTime
   clientHas: Client @relationship(type: "HAS", direction: IN)
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
   vendorHas: Vendor @relationship(type: "HAS", direction: IN)
@@ -217,20 +257,15 @@ type Module {
   id: ID! @id(autogenerate: true)
   title: String
   description: String
+  createdAt: DateTime
+  files:[String]
   sampleStatus: SampleStatus @default(value: NOT_SENT)
   projectHas: Project @relationship(type: "HAS", direction: IN)
   moduleticketFor: ModuleTicket @relationship(type: "FOR", direction: IN)
   hasDocuments: Documents @relationship(type: "HAS", direction: OUT)
 }
 
-type Page {
-  id: ID! @id(autogenerate: true)
-  image: String
-  title: String
-  subtitle: String
-  description: String
-  adminCreated: Admin @relationship(type: "CREATED", direction: IN)
-}
+
 
 type Leads {
   id: ID! @id(autogenerate: true)
@@ -251,9 +286,9 @@ type Leads {
 }
 
 type Counter {
-  projectCount: Int @default(value: 1000)
-  moduleCount: Int @default(value: 1000)
-  invoiceCount: Int @default(value: 1000)
+  projectCount: Int @default(value: 1)
+  moduleCount: Int @default(value: 1)
+  invoiceCount: Int @default(value: 1)
 }
 
 
@@ -262,7 +297,8 @@ type CommunicationTicket {
   message: String
   date: DateTime
   sub: String
-  files: String
+  sender: UserType
+  files: [String]
   adminCreated: Admin @relationship(type: "CREATED", direction: IN)
   hasReply: [Reply!]! @relationship(type: "HAS", direction: OUT)
   forVendor: [Vendor!]! @relationship(type: "FOR", direction: OUT)
@@ -276,14 +312,213 @@ type Reply {
   communicationticketHas: CommunicationTicket @relationship(type: "HAS", direction: IN)
   clientHas: Client @relationship(type: "HAS", direction: IN)
   vendorHas: Vendor @relationship(type: "HAS", direction: IN)
+
+}
+
+type Role {
+  id: ID! @id(autogenerate: true)
+  name: String
+  permissions: [String] 
+  createdAt: DateTime
+  adminCreated: Admin @relationship(type: "CREATED", direction: IN)
+  userHas: User @relationship(type: "HAS", direction: IN)
+}
+
+type Management {
+  id: ID! @id(autogenerate: true)
+  moduelid: String!
+  moduleTitle: String!
+  reports: [String]
+  vendorHas: Vendor @relationship(type: "HAS", direction: IN)
+  sentReportsModuleticket: ModuleTicket @relationship(type: "SENT_REPORTS", direction: OUT)
+}
+
+type Employee {
+  id: ID @id(autogenerate: true)
+  employerEmail: String!
+  userHas: User @relationship(type: "HAS", direction: IN)
+}
+
+type Service {
+  id: ID @id(autogenerate: true)
+  category: String
+  coverImageUrl: String
+  title: String
+  description: String
+  slug: String
+  pageContent: String
+  isPopular: Boolean @default(value: false)
+  thumbnailUrl: String
+  isService: Boolean @default(value: false)
+  isSolution: Boolean @default(value: false)
+  adminCreated: Admin @relationship(type: "CREATED", direction: IN)
+  categoryHas: Category @relationship(type: "HAS", direction: IN)
+}
+
+
+type Subservice {
+  id: ID! @id(autogenerate: true)
+  image: String
+  title: String
+  slug: String
+  description: String
+  
+}
+
+
+type Log {
+  id: ID! @id(autogenerate: true)
+  title: String!
+  createdAt: DateTime!
+  message: String!
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+type Product {
+  id: ID! @id(autogenerate: true)
+  title: String
+  shortDescription: String
+  file: String
+  video: String
+  features: String
+  others: String
+  image: String
+  isPopular: Boolean @default(value: false)
+  isSpecial: Boolean @default(value: false)
+  createdAt: DateTime
+  price: Int
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+  hasSubcategory: SubCategory @relationship(type: "HAS", direction: OUT)
+  homepageHas: HomePage @relationship(type: "HAS", direction: IN)
+  categoryHas: Category @relationship(type: "HAS", direction: IN)
+}
+
+type Category {
+  id: ID @id(autogenerate: true)
+  name: String
+  type: CategoryTypeEnum
+  categoryHasChild: [Category!]! @relationship(type: "HAS_CHILD", direction: IN)
+  hasChildCategory: [Category!]! @relationship(type: "HAS_CHILD", direction: OUT)
+  hasService: [Service!]! @relationship(type: "HAS", direction: OUT)
+  hasProduct: [Product!]! @relationship(type: "HAS", direction: OUT)
+}
+
+
+
+type HomePage {
+  id: ID! @id(autogenerate: true)
+  heroText: String
+  heroImage: String
+  hasHomeservices: [HomeServices!]! @relationship(type: "HAS", direction: OUT)
+  hasHomeclient: [HomeClient!]! @relationship(type: "HAS", direction: OUT)
+  hasProduct: [Product!]! @relationship(type: "HAS", direction: OUT)
+  hasHero: Hero @relationship(type: "HAS", direction: OUT)
+}
+
+type HomeServices {
+  id: ID! @id(autogenerate: true)
+  title: String
+  description: String
+  slug: String
+  homepageHas: HomePage @relationship(type: "HAS", direction: IN)
+}
+
+type HomeClient {
+  id: ID! @id(autogenerate: true)
+  name: String
+  logo: String
+  homepageHas: HomePage @relationship(type: "HAS", direction: IN)
+}
+
+type Event {
+  id: ID! @id(autogenerate: true)
+  name: String
+  slug: String
+  description: String
+  endAt: DateTime
+  startAt: DateTime
+  location: String
+  image: String
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+type Calibration {
+  id: ID! @id(autogenerate: true)
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+type Testing {
+  id: ID! @id(autogenerate: true)
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+
+type IndustryPage {
+  id: ID! @id(autogenerate: true)
+  title: String
+  image: String
+  description: String
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+
+
+type SubSolution {
+  id: ID @id(autogenerate: true)
+  image: String
+  title: String
+  slug:String
+  subtitle: String
+  description: String
+  solutionpageHas: SolutionPage @relationship(type: "HAS", direction: IN)
+}
+
+type SolutionPage {
+  id: ID @id(autogenerate: true)
+  title: String
+  adminCreated: Admin @relationship(type: "CREATED", direction: IN)
+  hasSubsolution: SubSolution @relationship(type: "HAS", direction: OUT)
+}
+
+type AboutPage {
+  id: ID! @id(autogenerate: true)
+  title: String
+  image: String
+  description: String
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+type FeaturesPage {
+  id: ID! @id(autogenerate: true)
+  title: String
+  image: String
+  description: String
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+
+type TermsPage {
+  id: ID! @id(autogenerate: true)
+  title: String
+  content: String
+  slug: String
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+
+type LearnItem {
+  id: ID! @id(autogenerate: true)
+  title: String
+  description: String
+  url: String
+  adminHas: Admin @relationship(type: "HAS", direction: IN)
+}
+
+type Hero {
+  id: ID! @id(autogenerate: true)
+  title: String
+  image: String
+  homepageHas: HomePage @relationship(type: "HAS", direction: IN)
 }
 
 type Mutation {
-  signUp(email: String!, name: String!): String! 
-  signIn(email: String!, name: String!): String!
+  signUp(email: String!, name: String!, user_type: String!): String! 
+  signIn(email: String!): String!
 }
 
-
+ 
 
 
 `;

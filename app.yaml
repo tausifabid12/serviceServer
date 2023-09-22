@@ -1,0 +1,7 @@
+runtime: nodejs16
+env: standard
+env_variables:
+  ACCESS_TOKEN: wAgVDuBq7BaNyluoKdHDiAsdfkljsfsdakfjdfsfsjjfsfjorywetyrfhdsncvasfsahflkdsfosdhfjfsafhSFSFSFSDFSAFakiljsdflaj
+  DB_USER: neo4j
+  DB_PASSWORD: YbrGd0HqFmgpKwpPPCMdOsk0_iJNNe2C1jjyqn3X2Fs
+  DB_URI: neo4j+s://648b2794.databases.neo4j.io

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "deploy": "gcloud app deploy",
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "tsc",
     "start": "node ./dist/index.js",
@@ -31,6 +32,6 @@
     "typescript": "^5.0.3"
   },
   "engines": {
-    "node": "16.15.1"
+    "node":"18.18.0"
   }
 }
