@@ -90,11 +90,12 @@ const authorizationMiddleware = async (requestContext) => {
         const userType = user?.user_type;
         const permissions = role?.permissions;
         // restricting lab assistant to access employees and moduleTickets approval
-        if (userType === 'LAB_ASSISTANT') {
-            if (requestedNode === 'employees') {
-                return false; // Authorization failed
-            }
-        }
+        // if(userType === 'LAB_ASSISTANT' ){
+        // // if(requestedNode ==='employees'){
+        // //   return false;
+        // // }
+        // return
+        // }
         if (userType === 'COVENTEN_EMPLOYEE') {
             const lowerCasePermissions = permissions.map(item => item.toLowerCase());
             // filter permission according to nodes 
@@ -118,22 +119,91 @@ const authorizationMiddleware = async (requestContext) => {
             if (lowerCasePermissions.includes('support')) {
                 replacePermission(lowerCasePermissions, 'support', "supportTickets");
             }
-            // throwing error if permission doesn't exists
-            if (!lowerCasePermissions.includes(requestedNode)) {
-                // throw new GraphQLError('You are not authorized to perform this action.', {
-                //   extensions: {
-                //     code: 'FORBIDDEN',
-                //   },
-                // });
-                return false; // Authorization failed
+            if (lowerCasePermissions.includes('add product')) {
+                replacePermission(lowerCasePermissions, 'add product', "products");
+            }
+            if (lowerCasePermissions.includes('add events')) {
+                replacePermission(lowerCasePermissions, 'add events', "events");
+            }
+            if (lowerCasePermissions.includes('homepage hero')) {
+                replacePermission(lowerCasePermissions, 'homepage hero', "heroes");
+            }
+            if (lowerCasePermissions.includes('legal pages')) {
+                replacePermission(lowerCasePermissions, 'legal pages', "termsPages");
+            }
+            if (lowerCasePermissions.includes('about us page')) {
+                replacePermission(lowerCasePermissions, 'about us page', "aboutUsSections");
+            }
+            if (lowerCasePermissions.includes('industry')) {
+                replacePermission(lowerCasePermissions, 'industry', "industryPages");
+            }
+            if (lowerCasePermissions.includes('features')) {
+                replacePermission(lowerCasePermissions, 'features', "featuresPages");
+            }
+            if (lowerCasePermissions.includes('learn items')) {
+                replacePermission(lowerCasePermissions, 'learn items', "learnItems");
+            }
+            if (lowerCasePermissions.includes('services')) {
+                replacePermission(lowerCasePermissions, 'services', "services");
+            }
+            if (lowerCasePermissions.includes('solution')) {
+                replacePermission(lowerCasePermissions, 'solution', "services");
+            }
+            if (lowerCasePermissions.includes('categories')) {
+                replacePermission(lowerCasePermissions, 'categories', "categories");
+            }
+            if (lowerCasePermissions.includes('homepage about company')) {
+                replacePermission(lowerCasePermissions, 'homepage about company', "aboutUsSections");
+            }
+            if (lowerCasePermissions.includes('homepage clients')) {
+                replacePermission(lowerCasePermissions, 'homepage clients', "homeClients");
+            }
+            if (requestedNode === "communicationTickets" ||
+                requestedNode === "invoices" ||
+                requestedNode === "moduleTickets" ||
+                requestedNode === "supportTickets" ||
+                requestedNode === "employees" ||
+                requestedNode === "leads" ||
+                requestedNode === "roles") {
+                if (!lowerCasePermissions.includes(requestedNode)) {
+                    return false; // Authorization failed
+                }
+                else {
+                    return true; // Authorization succeeded
+                }
             }
             else {
-                return true; // Authorization succeeded
+                if (operationType === "mutation" &&
+                    requestedNode === "industryPages" ||
+                    requestedNode === "categories" ||
+                    requestedNode === "products" ||
+                    requestedNode === "events" ||
+                    requestedNode === "heroes" ||
+                    requestedNode === "featuresPages" ||
+                    requestedNode === "homeClients" ||
+                    requestedNode === "aboutUsSections" ||
+                    requestedNode === "services" ||
+                    requestedNode === "learnItems" ||
+                    requestedNode === "aboutPages" ||
+                    requestedNode === "termsPages") {
+                    if (!lowerCasePermissions.includes(requestedNode)) {
+                        return false; // Authorization failed
+                    }
+                    else {
+                        return true; // Authorization succeeded
+                    }
+                }
+                else {
+                    return true; // Authorization succeeded
+                }
             }
+        }
+        else {
+            return true; // Authorization succeeded
         }
     }
     catch (error) {
-        return error;
+        return false;
     }
 };
 const createContext = async ({ req }) => {
@@ -170,9 +240,11 @@ Promise.all([neoSchema.getSchema(), ogm.init()]).then(([schema]) => {
                 async requestDidStart(requestContext) {
                     return {
                         async willSendResponse(requestContext) {
-                            // const result = await authorizationMiddleware(requestContext)
-                            // console.log(requestContext.response, "resoponse")
-                            // requestContext.response.body = null
+                            const result = await authorizationMiddleware(requestContext);
+                            // console.log(result, "result")
+                            // if(!result){
+                            //   requestContext.response.body = null
+                            // }
                         },
                     };
                 },
@@ -186,3 +258,5 @@ Promise.all([neoSchema.getSchema(), ogm.init()]).then(([schema]) => {
         console.log(`🚀 Server ready at ${url}`);
     });
 });
+// 9876
+// who can apply
